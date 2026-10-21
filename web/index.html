@@ -249,7 +249,7 @@
   .empty { color: var(--ink-3); font-size: 14px; }
 
   /* model card */
-  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 10px; }
   @media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
   .tile { background: var(--surface-solid); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
   .tile .v { font-size: 30px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -282,6 +282,24 @@
   .step b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
   .step .num { width: 26px; height: 26px; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-size: 13px; font-weight: 700; display: grid; place-items: center; margin-bottom: 10px; }
 
+  /* disclosure list */
+  .disc-group { padding: 4px 0; }
+  .disc + .disc { border-top: 1px solid var(--line); }
+  .disc-h { width: 100%; background: none; border: 0; color: var(--ink); font: inherit; text-align: left; display: flex; align-items: center; gap: 12px; padding: 16px 20px; cursor: pointer; border-radius: 14px; }
+  .disc-h:hover { background: var(--surface-2); }
+  .disc-h .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff; flex: none; font-size: 14px; }
+  .disc-h .tt { font-weight: 600; font-size: 16px; letter-spacing: -.01em; }
+  .disc-h .ds { color: var(--ink-2); font-size: 13px; font-weight: 400; }
+  .disc-h .chev { margin-left: auto; color: var(--ink-3); transition: transform .3s cubic-bezier(.2,.8,.2,1); flex: none; }
+  .disc-h .chev svg { width: 16px; height: 16px; display: block; }
+  .disc[open] .disc-h .chev { transform: rotate(90deg); }
+  .disc-b { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s cubic-bezier(.2,.8,.2,1); }
+  .disc[open] .disc-b { grid-template-rows: 1fr; }
+  .disc-b > div { overflow: hidden; }
+  .disc-in { padding: 4px 20px 22px; }
+  .disc-in .card { background: var(--surface-solid); box-shadow: none; }
+  @media (max-width: 600px) { .disc-h { padding: 14px 16px; } .disc-in { padding: 2px 16px 18px; } }
+
   footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
   footer a { color: var(--ink-2); }
   footer code { font-family: ui-monospace, SF Mono, Menlo, monospace; background: var(--surface-2); padding: 2px 6px; border-radius: 6px; font-size: 12px; }
@@ -299,8 +317,8 @@
     <div class="nav-sp"></div>
     <div class="nav-links">
       <a href="#try">Try it</a>
-      <a href="#model">Model card</a>
-      <a href="#how">How it works</a>
+      <a href="#model" data-open="model">Model card</a>
+      <a href="#how" data-open="how">How it works</a>
       <a href="https://github.com/sankrantisrikar/polyglot-120" target="_blank" rel="noopener">GitHub</a>
     </div>
     <div class="status" id="status" title="API status"><span class="dot" id="dot"></span><span id="status-text">Checking API</span></div>
@@ -374,16 +392,17 @@
       <div class="chips" id="chips"></div>
     </div>
 
-    <div class="card">
-      <h3>Recent</h3>
-      <p class="h3-sub">Stored only in this browser. Click to run again.</p>
+    <div class="card disc-group" id="more">
+      <div class="disc" id="recent">
+        <button class="disc-h" aria-expanded="false"><span class="ic" style="background:linear-gradient(135deg,#636366,#8e8e93)">&#8635;</span><span><span class="tt">Recent</span><br><span class="ds">Your last queries, stored only in this browser</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+        <div class="disc-b"><div><div class="disc-in">
       <div class="hist" id="hist"><div class="empty">Nothing yet.</div></div>
-    </div>
-  </section>
-
-  <section id="model">
-    <h2>Model card</h2>
-    <p class="sec-sub">Numbers from the held-out FLORES-style evaluation in reports/metrics.json. Same model that answers above.</p>
+        </div></div></div>
+      </div>
+      <div class="disc" id="model">
+        <button class="disc-h" aria-expanded="false"><span class="ic" style="background:linear-gradient(135deg,#0a84ff,#5e5ce6)">&#9679;</span><span><span class="tt">Model card</span><br><span class="ds">Accuracy by slice, confusions, and the routing trade-off</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+        <div class="disc-b"><div><div class="disc-in">
+    <p class="sec-sub" style="margin-top:0">Numbers from the held-out FLORES-style evaluation in reports/metrics.json. Same model that answers above.</p>
     <div class="tiles">
       <div class="tile"><div class="v">120</div><div class="k">languages and scripts</div></div>
       <div class="tile"><div class="v">0.944</div><div class="k">macro-F1 on clean text</div></div>
@@ -407,17 +426,23 @@
       <p class="h3-sub">Raising the threshold sends more inputs to the fallback and makes the kept answers more accurate. The deployed API runs at the highlighted row.</p>
       <table class="route-table" id="routes"><thead><tr><th>Threshold</th><th>Coverage</th><th>Accuracy on kept</th><th>Accuracy on routed</th></tr></thead><tbody></tbody></table>
     </div>
-  </section>
-
-  <section id="how">
-    <h2>How it works</h2>
-    <p class="sec-sub">One request, two models, one honest answer.</p>
+        </div></div></div>
+      </div>
+      <div class="disc" id="how">
+        <button class="disc-h" aria-expanded="false"><span class="ic" style="background:linear-gradient(135deg,#bf5af2,#ff375f)">&#10033;</span><span><span class="tt">How it works</span><br><span class="ds">Two models, one confidence check</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+        <div class="disc-b"><div><div class="disc-in">
+    <p class="sec-sub" style="margin-top:0">One request, two models, one honest answer.</p>
     <div class="steps">
       <div class="step"><div class="num">1</div><b>Primary model</b>XLM-R fine-tuned on 120 languages scores the text and returns a softmax over all labels.</div>
       <div class="step"><div class="num">2</div><b>Confidence check</b>If the top probability is below the threshold, the request is marked uncertain instead of returning a shaky guess.</div>
       <div class="step"><div class="num">3</div><b>Fallback route</b>Uncertain inputs go to fastText lid.176, a lighter model that is more robust on very short or noisy text. The response says which path answered.</div>
     </div>
+        </div></div></div>
+      </div>
+    </div>
   </section>
+
+
 
   <footer>
     <span>API <code id="apiurl"></code></span>
@@ -640,6 +665,7 @@
     el.querySelectorAll(".hist-item").forEach(x => x.onclick = () => { text.value = hist[+x.dataset.i].t; updateMeta(); run(false); window.scrollTo({ top: 0, behavior: "smooth" }); });
   }
   function pushHistory(t, d) {
+    if (!hist.length) openDisc("recent", true);
     hist = [{ t, l: d.language, c: d.routed_to_fallback && d.fallback_confidence != null ? d.fallback_confidence : d.confidence }, ...hist.filter(h => h.t !== t)].slice(0, 8);
     try { localStorage.setItem("pg-hist", JSON.stringify(hist)); } catch (e) {}
     renderHist();
@@ -661,6 +687,19 @@
   $("routes").querySelector("tbody").innerHTML = METRICS.routing.map(([t, c, k, r]) => `<tr class="${t === 0.8 ? "live" : ""}"><td>${t}</td><td>${(c * 100).toFixed(1)}%</td><td>${(k * 100).toFixed(1)}%</td><td>${(r * 100).toFixed(1)}%</td></tr>`).join("");
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.querySelectorAll(".bar i").forEach(i => i.style.width = i.dataset.w + "%"); io.unobserve(e.target); } }), { threshold: .3 });
   io.observe($("slices"));
+
+
+  /* disclosure rows */
+  function openDisc(id, on) {
+    const d = $(id); if (!d) return;
+    const open = on == null ? !d.hasAttribute("open") : on;
+    if (open) d.setAttribute("open", ""); else d.removeAttribute("open");
+    d.querySelector(".disc-h").setAttribute("aria-expanded", String(open));
+    if (open && id === "model") $("slices").querySelectorAll(".bar i").forEach(i => i.style.width = i.dataset.w + "%");
+  }
+  document.querySelectorAll(".disc-h").forEach(b => b.onclick = () => openDisc(b.parentElement.id));
+  document.querySelectorAll("[data-open]").forEach(a => a.addEventListener("click", (e) => { e.preventDefault(); openDisc(a.dataset.open, true); setTimeout(() => $(a.dataset.open).scrollIntoView({ behavior: "smooth", block: "start" }), 50); }));
+  if (location.hash === "#model" || location.hash === "#how") openDisc(location.hash.slice(1), true);
 
   /* wiring */
   $("go").onclick = () => run(false);
