@@ -54,7 +54,7 @@ which path answered.
 Server-side is tokenization + forward pass + routing inside the API; round trip adds network and
 queueing. Cold start after idle: about 15 s (weights load from the image, no download).
 
-Live demo: _TBD (Vercel)_ · API: [ssrikar1503--polyglot-120.us-east.modal.run](https://ssrikar1503--polyglot-120.us-east.modal.run/docs) (`/docs` for the OpenAPI UI, `/health` for status) · Code: [github.com/sankrantisrikar/polyglot-120](https://github.com/sankrantisrikar/polyglot-120)
+Live demo: [polyglot-120.vercel.app](https://polyglot-120.vercel.app) · API: [ssrikar1503--polyglot-120.us-east.modal.run](https://ssrikar1503--polyglot-120.us-east.modal.run/docs) (`/docs` for the OpenAPI UI, `/health` for status) · Code: [github.com/sankrantisrikar/polyglot-120](https://github.com/sankrantisrikar/polyglot-120)
 
 ---
 
