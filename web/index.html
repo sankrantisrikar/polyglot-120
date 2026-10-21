@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polyglot-120</title>
+<meta name="description" content="Multilingual language identification across 120+ languages with confidence-based fallback routing." />
+<style>
+  :root { --bg:#0b1020; --card:#131a2e; --ink:#e8ecf5; --mute:#9aa6c2; --accent:#5b8cff; --ok:#3ddc97; --warn:#ffb648; --line:#243052; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:760px; margin:0 auto; padding:40px 16px 64px; }
+  h1 { font-size:28px; margin:0 0 4px; letter-spacing:.2px; }
+  .sub { color:var(--mute); margin:0 0 24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  textarea { width:100%; min-height:120px; resize:vertical; border-radius:10px; border:1px solid var(--line); background:#0f1528; color:var(--ink); padding:12px; font:inherit; }
+  .row { display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:10px; padding:10px 16px; font:inherit; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:default; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { background:#0f1528; border:1px solid var(--line); color:var(--mute); border-radius:999px; padding:6px 10px; font-size:13px; cursor:pointer; }
+  .result { margin-top:18px; display:none; }
+  .top { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .lang { font-size:26px; font-weight:700; }
+  .meta { color:var(--mute); font-size:14px; }
+  .badge { font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--line); }
+  .badge.ok { color:var(--ok); border-color:var(--ok); }
+  .badge.warn { color:var(--warn); border-color:var(--warn); }
+  .bar { height:8px; background:#0f1528; border-radius:999px; overflow:hidden; margin:6px 0 10px; }
+  .bar > i { display:block; height:100%; background:var(--accent); }
+  .cand { display:flex; justify-content:space-between; font-size:14px; color:var(--mute); }
+  .err { color:#ff7a7a; margin-top:12px; }
+  footer { color:var(--mute); font-size:13px; margin-top:28px; }
+  code { background:#0f1528; padding:2px 6px; border-radius:6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Polyglot-120</h1>
+  <p class="sub">Language identification across 120+ languages. Low-confidence inputs are routed to a fallback path.</p>
+
+  <div class="card">
+    <textarea id="text" placeholder="Paste or type text in any language…"></textarea>
+    <div class="row">
+      <button id="go">Identify</button>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="err" id="err"></div>
+
+    <div class="result" id="result">
+      <div class="top">
+        <div class="lang" id="lang">—</div>
+        <div class="meta"><span id="lat"></span> · <span class="badge" id="route"></span></div>
+      </div>
+      <div id="cands"></div>
+    </div>
+  </div>
+
+  <footer>
+    API: <code id="apiurl"></code> · threshold <code id="thr">—</code>
+  </footer>
+</main>
+
+<script>
+  // Your API base URL (Modal or Hugging Face Space), no trailing slash.
+  const API_URL = "https://ssrikar1503--polyglot-120.us-east.modal.run";
+
+  const samples = [
+    ["English", "The committee will publish its findings early next year."],
+    ["Telugu", "వేగవంతమైన గోధుమ నక్క సోమరి కుక్కపై దూకుతుంది."],
+    ["Arabic", "ستنشر اللجنة نتائجها في أوائل العام المقبل."],
+    ["Short", "merci"],
+    ["Code-mixed", "I'll be there in 5 min, थोड़ा late हो जाऊंगा"],
+    ["Noisy", "thsi is a nosiy englsh sentnce"],
+    ["Japanese", "素早い茶色の狐が怠け者の犬を飛び越える。"],
+  ];
+  const $ = (id) => document.getElementById(id);
+  $("apiurl").textContent = API_URL;
+  const chips = $("chips");
+  for (const [name, text] of samples) {
+    const b = document.createElement("span");
+    b.className = "chip"; b.textContent = name;
+    b.onclick = () => { $("text").value = text; run(); };
+    chips.appendChild(b);
+  }
+
+  async function run() {
+    const text = $("text").value.trim();
+    $("err").textContent = ""; $("result").style.display = "none";
+    if (!text) return;
+    $("go").disabled = true;
+    // The API scales to zero when idle; the first request after a pause can take 10-30 s.
+    const wake = setTimeout(() => { $("err").textContent = "Waking the model up (first request after idle takes 10 to 30 seconds)..."; }, 2500);
+    try {
+      const r = await fetch(`${API_URL}/identify`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, top_k: 3 }),
+      });
+      if (!r.ok) throw new Error(`API ${r.status}`);
+      const d = await r.json();
+      $("lang").textContent = d.language;
+      $("lat").textContent = `${d.latency_ms} ms`;
+      $("thr").textContent = d.threshold;
+      const route = $("route");
+      route.textContent = d.routed_to_fallback ? "routed to fallback" : "primary model";
+      route.className = "badge " + (d.routed_to_fallback ? "warn" : "ok");
+      $("cands").innerHTML = d.candidates.map(c => `
+        <div class="cand"><span>${c.language}</span><span>${(c.confidence*100).toFixed(1)}%</span></div>
+        <div class="bar"><i style="width:${Math.max(2, c.confidence*100)}%"></i></div>`).join("");
+      clearTimeout(wake); $("err").textContent = "";
+      $("result").style.display = "block";
+    } catch (e) {
+      clearTimeout(wake);
+      $("err").textContent = `Could not reach the API (${e.message}). Try again in a few seconds; if it persists the API is down.`;
+    } finally { clearTimeout(wake); $("go").disabled = false; }
+  }
+  $("go").onclick = run;
+  $("text").addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(); });
+</script>
+</body>
+</html>
